@@ -3,6 +3,7 @@ import './App.css';
 import { useEffect, useRef, useState } from 'react';
 import Button from '@material-ui/core/Button';
 import { createImage } from './util/canvas-utils';
+import { hslToRgb, rgbToHsl } from './util/colorspace_utils';
 const getPixels = require('get-pixels')
 
 function App() {
@@ -63,7 +64,37 @@ function App() {
     canvas.height = image.height
     // console.log("image width", image.width)
     ctx.drawImage(image, 0,0);
-    console.log(ctx.getImageData(0, 0, canvas.width, canvas.height))
+    let canvasImageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+    console.log(getImageHSLInfo(canvasImageData))
+  }
+
+  const getImageHSLInfo = (imageData) => {
+    const data = imageData.data;
+    let hues = { }
+    for (let i=0; i < data.length; i += 4) {
+      //data[i] = pixel red component
+      //[i+1] = blue component
+      //[i+2] = green
+      //[i+3] = alpha channel
+      let color = getPixelColor(data[i], data[i+1], data[i+2])
+      hues[color.h] = hues[color.h] || []
+      hues[color.h].push([color.s, color.l])
+    }
+    return hues;
+  }
+
+  const getDominantHues = (imageHSLinfo) => {
+    
+  }
+
+  const getPixelColor = (pixelR, pixelB, pixelG) => {
+    const color = rgbToHsl(pixelR, pixelB, pixelG)
+
+    return {
+      h: color[0],
+      s: Math.round((color[1] * 100)),
+      l: Math.round((color[2] * 100))
+    }
   }
 
 
