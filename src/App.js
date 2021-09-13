@@ -2,7 +2,7 @@ import logo from './logo.svg';
 import './App.css';
 import { useEffect, useRef, useState } from 'react';
 import Button from '@material-ui/core/Button';
-import { fetchImageData } from './util/canvas-utils';
+import { createImage } from './util/canvas-utils';
 const getPixels = require('get-pixels')
 
 function App() {
@@ -25,12 +25,22 @@ function App() {
   useEffect(() => {
     // console.log(imageUpload)
     // console.log(imageURL)
-      if(imageRef.current) {
+    const createImage = (url) => new Promise((resolve, reject) => {
+      const image = new Image();
+      image.addEventListener('load', () => resolve(image));
+      image.addEventListener('error', error => reject(error));
+      image.setAttribute('crossOrigin', 'anonymous');
+      image.src = url;
+    });
+
+      if(imageRef.current && imageUpload) {
+        imageRef.current.addEventListener('load', () => fetchImageData(imageRef.current) )
         imageRef.current.src=(imageURL)
+        // imageRef.current.onload=(() => fetchImageData(imageRef.current))
+        
         // getPixels(imageRef.current.src, (err, pixels) => {
         //   if (!err) {console.log(pixels)} else {console.log(err)}
         // } )
-        drawImageToCanvas(imageRef.current)
       }
       // const canvas = (document.createElement('canvas'))
       // const context = canvas.getContext('2d')
@@ -46,10 +56,12 @@ function App() {
   //   }
   // }, [imageURL])
 
-  const drawImageToCanvas =  (image) => {
-    var canvas = document.getElementById('canvas');
-    // console.log(canvas.width)
+  const fetchImageData =  (image) => {
+    var canvas = document.getElementById('canvas')
     var ctx = canvas.getContext('2d');
+    canvas.width = image.width
+    canvas.height = image.height
+    // console.log("image width", image.width)
     ctx.drawImage(image, 0,0);
     console.log(ctx.getImageData(0, 0, canvas.width, canvas.height))
   }
@@ -66,14 +78,14 @@ function App() {
       accept="image/*"
       id="input"
       hidden
-      onChange={handleFileChange.bind(this)}
+      onChange={handleFileChange}
     />  
     Upload image
     </Button>
 
     <img id="image-upload" ref={imageRef} alt="hello" style={{display: "none"}}></img>
     {/* <img id="image-upload" ref={imageRef} alt="hello"></img> */}
-    <canvas id="canvas" ></canvas>
+    <canvas id="canvas" style={{display:"none"}} ></canvas>
 
     </div>
   );

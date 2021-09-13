@@ -18,7 +18,7 @@ export const fetchImageData = async (imageSrc) => {
     const image = await createImage(imageSrc);
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-
+    
     const safeArea = Math.max(image.width, image.height);
 
     canvas.width = safeArea;
