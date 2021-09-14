@@ -6,6 +6,9 @@ import { createImage } from './util/canvas-utils';
 import { hslToRgb, rgbToHsl } from './util/colorspace_utils';
 import { Arc, Circle, Layer, Line, Stage } from 'react-konva';
 import { Html } from 'react-konva-utils';
+import { getShortestLongest } from './util/object-utils';
+import { deg2Rad, getCirclePoint } from './util/circle_utils';
+import { getOneShadeColor } from './util/shade_utils';
 // const getPixels = require('get-pixels')
 
 function App() {
@@ -14,11 +17,14 @@ function App() {
   const circleXY = [Math.round(windowWidth/2), Math.round(windowHeight/2)]
 
   const imageRef = useRef(null)
+  const centerCircleRef = useRef(null)
   const [imageUpload, setImageUpload] = useState(null)
   const [imageURL, setImageURL] = useState(null)
   const [imageData, setImageData] = useState(null)
-  // const [imageHSLInfo, setImageHSLInfo] = useState(null)
   // const [quantizedInfo, setQuantizeInfo] = useState(null)
+  const [diameter, setDiameter] = useState(Math.round(windowHeight/5))
+  const plotLength = diameter;
+
 
 
 
@@ -33,42 +39,23 @@ function App() {
   // }
 
   useEffect(() => {
-    // console.log(imageUpload)
-    // console.log(imageURL)
-    // const createImage = (url) => new Promise((resolve, reject) => {
-    //   const image = new Image();
-    //   image.addEventListener('load', () => resolve(image));
-    //   image.addEventListener('error', error => reject(error));
-    //   image.setAttribute('crossOrigin', 'anonymous');
-    //   image.src = url;
-    // });
-
       if(imageRef.current && imageUpload) {
-        // imageRef.current.addEventListener('load', () => setImageData(fetchImageData(imageRef.current)))
         imageRef.current.src=(imageURL);
-
         imageRef.current.onload=(() => fetchImageData(imageRef.current))
-        
-        // getPixels(imageRef.current.src, (err, pixels) => {
-        //   if (!err) {console.log(pixels)} else {console.log(err)}
-        // } )
       }
-      // const canvas = (document.createElement('canvas'))
-      // const context = canvas.getContext('2d')
-      // context.drawImage(imageRef.current, 0, 0)
-      // console.log(context)
- 
   }, [imageUpload])
 
   // useEffect(() => {
-  //   // console.log(fetchImageData(imageURL))
-  //   if (imageRef.current) {
-  //     console.log(fetchImageData(imageRef.current.src))
-  //   }
-  // }, [imageURL])
-  useEffect(() => {
+  //   if (imageData)
+  //     {  
+  //     console.log('full', plotHues())
+  //     // console.log(plotHue(0, 0, circleXY, diameter/2))
+  //     // console.log(plotHue(9, 86, circleXY, diameter/2))
+  //     // console.log(plotHue(59, 165, circleXY, diameter/2))
+  //     // console.log(plotHue(330, (plotLength/2), circleXY, diameter/2))
 
-  }, [imageData])
+  //     }
+  //   }, [imageData])
 
   const fetchImageData =  (image) => {
     var canvas = document.getElementById('canvas')
@@ -84,7 +71,7 @@ function App() {
   const getImageHSLInfo = (imageData) => {
     const data = imageData.data;
     let hues = { }
-    for (let i=0; i < data.length; i += 8) { //+4 = every pixel -> +8 = every other pixel
+    for (let i=0; i < data.length; i += 4) { //+4 = every pixel -> +8 = every other pixel
       //data[i] = pixel red component
       //[i+1] = blue component
       //[i+2] = green
@@ -96,6 +83,7 @@ function App() {
        hues[color.h].push([color.s, color.l])
       }
     }
+    console.log(hues)
     return hues;
   }
 
@@ -122,6 +110,59 @@ function App() {
     }
   }
 
+  const plotHue = (hueAngle, length, circleCenter, radius) => {
+    // console.log(length)
+
+    const endDist = radius + length;
+    // console.log('hue Angle', hueAngle)
+    // console.log('radius', radius)
+    // console.log('circle center', circleCenter)
+    // console.log('length', length)
+    const startpt1 = getCirclePoint(hueAngle, radius, circleCenter)
+    const startpt2 = getCirclePoint(hueAngle+1, radius, circleCenter)
+    const endpt1 = getCirclePoint(hueAngle, endDist, circleCenter)
+    const endpt2 = getCirclePoint(hueAngle+1, endDist, circleCenter)
+    // console.log(startpt1, startpt2, endpt1, endpt2)
+    // return [startpt1[0], startpt1[1], endpt1[0], endpt1[1], endpt2[0], endpt2[1], startpt2[0], startpt2[1]]
+      return (
+        <Line
+          key={hueAngle}
+          points={[startpt1[0], startpt1[1], endpt1[0], endpt1[1], endpt2[0], endpt2[1], startpt2[0], startpt2[1]]}
+          closed={true}
+          fill={getOneShadeColor(hueAngle, 100, 50)} 
+          stroke={'black'}
+        />
+      )
+  }
+
+  const scaleLength = (num, max) => {
+    return Math.round((num/max) * plotLength)
+  }
+
+  const plotHues = () => {
+    const max = getShortestLongest(imageData)[1];
+  
+    const keys = Object.keys(imageData);
+    
+    const radius = Math.round(diameter/2)
+    // console.log('max', max)
+    // console.log('keys', keys)
+    // console.log(imageData)
+    // console.log(scaleLength(imageData[keys[1]].length))
+    // console.log(scaleLength(imageData[keys[1]]))
+    // const result = []
+    return(
+       keys.map( key =>
+        plotHue(parseInt(key), scaleLength(imageData[key].length, max), circleXY, radius)
+        )
+    )
+    // keys.map( key => console.log(scaleLength(imageData[key].length, max)))
+
+
+  }
+
+
+
 
 
   return (
@@ -131,7 +172,7 @@ function App() {
       width = {windowWidth}
       height = {windowHeight}>
 
-      <Layer listening={false}>
+      <Layer>
         <Html>
           <Button
             component = "label"
@@ -141,7 +182,7 @@ function App() {
             accept="image/*"
             id="input"
             hidden
-            onChange={handleFileChange}
+            onChange={handleFileChange.bind(this)}
           />  
           Upload image
           </Button>
@@ -152,7 +193,20 @@ function App() {
     </div>
     {/* </div> */}
     </Html>
-    {/* <Circle */}
+      <Circle key={'centerCircle'}
+        ref={centerCircleRef}
+        x={circleXY[0]}
+        y={circleXY[1]}
+        width={diameter}
+        height={diameter}
+        stroke={'black'}
+      />
+      {/* {plotHue(9, 64, circleXY, diameter/2)} */}
+      {/* {plotHue(59, 122, circleXY, diameter/2)} */}
+
+      {/* {plotHue(120, 88, circleXY, diameter/2)} */}
+      {/* {plotHue(270, (plotLength/2), circleXY, diameter/2)} */}
+      {imageData &&  plotHues(imageData)}
     </Layer>
 
 
