@@ -21,9 +21,10 @@ function App() {
   const [imageUpload, setImageUpload] = useState(null)
   const [imageURL, setImageURL] = useState(null)
   const [imageData, setImageData] = useState(null)
+  const [quantizedImageData, setQuantizedImageData] = useState(null)
   // const [quantizedInfo, setQuantizeInfo] = useState(null)
-  const [diameter, setDiameter] = useState(Math.round(windowHeight/5))
-  const plotLength = diameter;
+  const [diameter, setDiameter] = useState(Math.round(windowHeight/10))
+  const plotLength = Math.round(windowHeight/2);
 
 
 
@@ -32,11 +33,6 @@ function App() {
     setImageUpload(e.target.files[0])
     setImageURL(URL.createObjectURL(e.target.files[0]))
   }
-  
-
-  // const getImageData = () => {
-
-  // }
 
   useEffect(() => {
       if(imageRef.current && imageUpload) {
@@ -45,17 +41,10 @@ function App() {
       }
   }, [imageUpload])
 
-  // useEffect(() => {
-  //   if (imageData)
-  //     {  
-  //     console.log('full', plotHues())
-  //     // console.log(plotHue(0, 0, circleXY, diameter/2))
-  //     // console.log(plotHue(9, 86, circleXY, diameter/2))
-  //     // console.log(plotHue(59, 165, circleXY, diameter/2))
-  //     // console.log(plotHue(330, (plotLength/2), circleXY, diameter/2))
-
-  //     }
-  //   }, [imageData])
+  useEffect(() => {
+    if (imageData)
+      setQuantizedImageData(pseudoQuantize(imageData))
+    }, [imageData])
 
   const fetchImageData =  (image) => {
     var canvas = document.getElementById('canvas')
@@ -68,8 +57,8 @@ function App() {
     setImageData(getImageHSLInfo(canvasImageData));
   }
 
-  const getImageHSLInfo = (imageData) => {
-    const data = imageData.data;
+  const getImageHSLInfo = (imgData) => {
+    const data = imgData.data;
     let hues = { }
     for (let i=0; i < data.length; i += 4) { //+4 = every pixel -> +8 = every other pixel
       //data[i] = pixel red component
@@ -87,12 +76,25 @@ function App() {
     return hues;
   }
 
-  // const pseudoQuantize = (imageHSLinfo) => { // combine adjacent hues
-  //   let quantized = {};
+  const pseudoQuantize = (imageHSLinfo) => { // combine adjacent hues
+    let quantized = {};
+    // let keys = Object.values(imageHSLinfo)
 
-  //   return Object.keys(imageHSLinfo).length;
+    for (let i = 0; i < 360; i += 5) {
+      quantized[i] = []
+      if (imageHSLinfo[i]) {
+        quantized[i] = quantized[i].concat(imageHSLinfo[i])
+      }
+      for (let j = 1; j < 5; j++) {
+        if (imageHSLinfo[i+j]) {
+          quantized[i] = quantized[i].concat(imageHSLinfo[i+j])
+        }
+      }
       
-  //   }
+    }
+    return quantized;
+      
+  }
 
   
 
@@ -119,9 +121,9 @@ function App() {
     // console.log('circle center', circleCenter)
     // console.log('length', length)
     const startpt1 = getCirclePoint(hueAngle, radius, circleCenter)
-    const startpt2 = getCirclePoint(hueAngle+1, radius, circleCenter)
+    const startpt2 = getCirclePoint(hueAngle+4, radius, circleCenter)
     const endpt1 = getCirclePoint(hueAngle, endDist, circleCenter)
-    const endpt2 = getCirclePoint(hueAngle+1, endDist, circleCenter)
+    const endpt2 = getCirclePoint(hueAngle+4, endDist, circleCenter)
     // console.log(startpt1, startpt2, endpt1, endpt2)
     // return [startpt1[0], startpt1[1], endpt1[0], endpt1[1], endpt2[0], endpt2[1], startpt2[0], startpt2[1]]
       return (
@@ -130,7 +132,6 @@ function App() {
           points={[startpt1[0], startpt1[1], endpt1[0], endpt1[1], endpt2[0], endpt2[1], startpt2[0], startpt2[1]]}
           closed={true}
           fill={getOneShadeColor(hueAngle, 100, 50)} 
-          stroke={'black'}
         />
       )
   }
@@ -139,21 +140,21 @@ function App() {
     return Math.round((num/max) * plotLength)
   }
 
-  const plotHues = () => {
-    const max = getShortestLongest(imageData)[1];
+  const plotHues = (imgData) => {
+    const max = getShortestLongest(imgData)[1];
   
-    const keys = Object.keys(imageData);
+    const keys = Object.keys(imgData);
     
     const radius = Math.round(diameter/2)
     // console.log('max', max)
     // console.log('keys', keys)
-    // console.log(imageData)
-    // console.log(scaleLength(imageData[keys[1]].length))
-    // console.log(scaleLength(imageData[keys[1]]))
+    // console.log(imgData)
+    // console.log(scaleLength(imgData[keys[1]].length))
+    // console.log(scaleLength(imgData[keys[1]]))
     // const result = []
     return(
        keys.map( key =>
-        plotHue(parseInt(key), scaleLength(imageData[key].length, max), circleXY, radius)
+        plotHue(parseInt(key), scaleLength(imgData[key].length, max), circleXY, radius)
         )
     )
     // keys.map( key => console.log(scaleLength(imageData[key].length, max)))
@@ -193,6 +194,13 @@ function App() {
     </div>
     {/* </div> */}
     </Html>
+     
+      {/* {plotHue(9, 64, circleXY, diameter/2)} */}
+      {/* {plotHue(59, 122, circleXY, diameter/2)} */}
+
+      {/* {plotHue(120, 88, circleXY, diameter/2)} */}
+      {/* {plotHue(270, (plotLength/2), circleXY, diameter/2)} */}
+      {quantizedImageData &&  plotHues(quantizedImageData)}
       <Circle key={'centerCircle'}
         ref={centerCircleRef}
         x={circleXY[0]}
@@ -201,12 +209,6 @@ function App() {
         height={diameter}
         stroke={'black'}
       />
-      {/* {plotHue(9, 64, circleXY, diameter/2)} */}
-      {/* {plotHue(59, 122, circleXY, diameter/2)} */}
-
-      {/* {plotHue(120, 88, circleXY, diameter/2)} */}
-      {/* {plotHue(270, (plotLength/2), circleXY, diameter/2)} */}
-      {imageData &&  plotHues(imageData)}
     </Layer>
 
 
