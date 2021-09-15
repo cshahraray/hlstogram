@@ -1,5 +1,5 @@
 # hlstogram
-## live: hlstogram.herokuapp.com
+## [Try it out!](https://hlstogram.herokuapp.com)
 
 ### Background and Overview:
 
