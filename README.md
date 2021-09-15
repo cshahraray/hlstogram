@@ -16,7 +16,7 @@ This project is implemented using the following technologies:
 
     * The Canvas API to access and read image color data
     * The Konva library to create visualiaztions and plot graph bars based on hue frequency.
-    * Webpack and Babel for bundling and transpling JavaScript
+    * Webpack and Babel for bundling and transpiling JavaScript
     * npm for managing project dependencies
-    * A largely self-written trigonomotry library for calculating points in a raedial space and transforming them to a grid-coordinate (x,y) notation.
+    * A largely self-written trigonomotry library for calculating points in a radial space and transforming them to a grid-coordinate (x,y) notation.
 
