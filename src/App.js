@@ -180,7 +180,7 @@ function App() {
             data[i] = newColor.r
             data[i+1] = newColor.g
             data[i+2] = newColor.b
-            data[i+3] = 254;
+            // data[i+3] = 254;
           }
       }
       // console.log(data === imageData.data)
@@ -309,7 +309,8 @@ function App() {
     const endpt2 = getCirclePoint(hueAngle+4, endDist, circleCenter)
     // console.log(startpt1, startpt2, endpt1, endpt2)
     // return [startpt1[0], startpt1[1], endpt1[0], endpt1[1], endpt2[0], endpt2[1], startpt2[0], startpt2[1]]
-
+    if (!selectedHuesArr.includes(hueAngle.toString()))
+    {
       return (
         <Line
           key={hueAngle}
@@ -317,8 +318,21 @@ function App() {
           closed={true}
           fill={getOneShadeColor(hueAngle, 100, 50)} 
           onClick={handleHuesClick.bind(this, hueAngle, selectedHues)}
+          
         />
       )
+    } else {
+      return (
+        <Line
+          key={hueAngle}
+          points={[startpt1[0], startpt1[1], endpt1[0], endpt1[1], endpt2[0], endpt2[1], startpt2[0], startpt2[1]]}
+          closed={true}
+          fill={getOneShadeColor(hueAngle, 100, 50)} 
+          onClick={handleHuesClick.bind(this, hueAngle, selectedHues)}
+          stroke={'black'}
+        />
+      )
+    }
   }
 
   const scaleLength = (num, max) => {
