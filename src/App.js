@@ -166,7 +166,14 @@ function App() {
         //[i+3] = alpha channel
         color = getPixelColor(data[i], data[i+1], data[i+2])
         // console.log(!huesArray.includes(color.h))
-          if (!selectedHuesArr.includes(color.h)) {
+        let set = new Set(selectedHuesArr)
+        // if (i < 16) {
+        //   console.log(typeof selectedHuesArr[0])
+        //     console.log(typeof color.h.toString())
+        //   console.log(set.has(color.h.toString()))
+        //   console.log(selectedHuesArr.includes(color.h.toString()))
+        // }
+          if (!selectedHuesArr.includes(color.h.toString())) {
             // console.log(color.h)
             color.s = 0
             newColor = convertHSL2RGB(color)
