@@ -44,8 +44,8 @@ function App() {
   const circleXY = [Math.round(windowWidth/4), Math.round(windowHeight/2)];
   const [diameter, setDiameter] = useState(Math.round(windowHeight/5))
   const plotLength = Math.round(windowHeight/4);
-  const maxImgWidth = Math.round(windowWidth/3)
-  const maxImgHeight = Math.round(windowHeight/2)
+  const maxImgWidth = Math.round(windowWidth * (3/8))
+  const maxImgHeight = Math.round(windowHeight * (4/8))
   const [outputHeight, setOutputHeight] = useState(null)
   const [outputWidth, setOutputWidth] = useState(null)
 
@@ -69,17 +69,12 @@ function App() {
     const origWidth = imageRef.current.width;
     const origHeight = imageRef.current.height;
     let outputWidth1, outputHeight1;
-    if (origWidth >= origHeight && origWidth > maxImgWidth) {
+    if (origWidth >= origHeight && origWidth !== maxImgWidth) {
       outputWidth1 = maxImgWidth
       outputHeight1 = scaleImageDimension(outputWidth1, origWidth, origHeight)
-      setOutputWidth(outputWidth1)
-      setOutputHeight(outputHeight1)
     } else if (origHeight > maxImgHeight ) {
       outputHeight1 = maxImgHeight
       outputWidth1 = scaleImageDimension(outputHeight1, origHeight, origWidth)
-    } else {
-      outputHeight1 = origHeight;
-      outputWidth1 = origWidth;
     }
     setOutputWidth(outputWidth1)
     setOutputHeight(outputHeight1) 
