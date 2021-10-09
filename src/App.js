@@ -2,7 +2,7 @@ import logo from './logo.svg';
 import './App.css';
 import { useEffect, useRef, useState } from 'react';
 import Button from '@material-ui/core/Button';
-import { hslToRgb, rgbToHsl } from './util/colorspace_utils';
+import { convertHSL2RGB, getPixelColor, hslToRgb, rgbToHsl } from './util/colorspace_utils';
 import { Image, Circle, Layer, Line, Stage } from 'react-konva';
 import { Html } from 'react-konva-utils';
 import { getShortestLongest } from './util/object-utils';
@@ -47,30 +47,6 @@ function App() {
   const [outputHeight, setOutputHeight] = useState(null)
   const [outputWidth, setOutputWidth] = useState(null)
 
-
-
-
-  //given a pixel's RGB values return a JSON with it's HSL values
-  const getPixelColor = (pixelR, pixelG, pixelB) => {
-    const color = rgbToHsl(pixelR, pixelG, pixelB)
-
-    return {
-      h: Math.round(color[0]),
-      s: Math.round((color[1] * 100)),
-      l: Math.round((color[2] * 100))
-    }
-  }
-
-  //given a JSON with a pixel's HSL values return a JSON with it's RGB values
-  const convertHSL2RGB = (hslObj) => {
-    const color = hslToRgb(hslObj.h, hslObj.s / 100, hslObj.l / 100)
-    return {
-      r: color[0],
-      g: color[1],
-      b: color[2]
-    }
-  }
-
   //EVENT METHODS
   //event method for file upload
   const handleFileChange = (e) => {
@@ -82,7 +58,6 @@ function App() {
 
 
   const resizeImg = () => {
-
   }
   //handles file reading
   //runs asynchronously after file upload as image onload function
