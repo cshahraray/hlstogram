@@ -13,12 +13,11 @@ import ImageAdjust from './imageAdjust';
 
 
 function App() {
-  const windowWidth = window.innerWidth;
-  const windowHeight= window.innerHeight;
-  const circleXY = [Math.round(windowWidth/4), Math.round(windowHeight/2)];
+
 
   //COMPONENT STATE VARIABLES
   const imageRef = useRef(null);
+  const outputRef = useRef(null)
   const centerCircleRef = useRef(null);
     //handle image upload and file reading
   const [imageUpload, setImageUpload] = useState(null);
@@ -38,8 +37,17 @@ function App() {
   const [imageCanvas, setImageCanvas] = useState(null);
 
     //misc. values used in visualiaztion and for layout
-  const [diameter, setDiameter] = useState(Math.round(windowHeight/10))
+  const windowWidth = window.innerWidth;
+  const windowHeight= window.innerHeight;
+  const circleXY = [Math.round(windowWidth/4), Math.round(windowHeight/2)];
+  const [diameter, setDiameter] = useState(Math.round(windowHeight/5))
   const plotLength = Math.round(windowHeight/4);
+  const maxImgWidth = Math.round(windowWidth/3)
+  const maxImgHeight = Math.round(windowHeight/3)
+  const [outputHeight, setOutputHeight] = useState(null)
+  const [outputWidth, setOutputWidth] = useState(null)
+
+
 
 
   //given a pixel's RGB values return a JSON with it's HSL values
@@ -79,12 +87,20 @@ function App() {
     var ctx = canvas.getContext('2d');
     const origWidth = image.width;
     const origHeight = image.height;
+    let outputWidth1, outputHeight1;
+    if (origWidth >= origHeight && origWidth > maxImgWidth) {
+      outputWidth1 = maxImgWidth
+      outputHeight1 = scaleImageDimension(outputWidth1, origWidth, origHeight)
+    } else if (origHeight > maxImgHeight ) {
+      outputHeight1 = maxImgHeight
+      outputWidth1 = scaleImageDimension(outputHeight1, origHeight, origWidth)
+    }
     // imageRef.current.width = 500;
     // imageRef.current.height = scaleImageHeight(500, origWidth, origHeight)
-    canvas.height = image.height 
-    canvas.width = image.width
+    canvas.height = outputHeight
+    canvas.width = outputWidth
     // console.log("image width", image.width)
-    ctx.drawImage(image, 0,0);
+    ctx.drawImage(image, 0,0,outputWidth, outputHeight);
     setImageData(ctx.getImageData(0, 0, canvas.width, canvas.height));
     setImageCanvas(canvas)
     
@@ -110,6 +126,12 @@ function App() {
       setSelectedHues(hues)
       setSelectedHuesArr(Object.keys(selectedHues))
       // console.log(selectedHues)
+    }
+
+    const handleImageClick = (e) => {
+      console.log(e)
+      console.log(outputRef.current)
+
     }
   
   //useEffect hooks
@@ -186,9 +208,9 @@ function App() {
   }
 
   //misc method for scaling image heights
-  const scaleImageHeight = (newWidth, origWidth, origHeight) => {
-    const scale = newWidth/origWidth;
-    return Math.round(scale * origHeight)
+  const scaleImageDimension = (new1stDim, orig1stDim, orig2ndDim) => {
+    const scale = new1stDim/orig1stDim;
+    return Math.round(scale * orig2ndDim)
   }
 
 
@@ -283,20 +305,29 @@ function App() {
 
   //scale plot length of hues based on the ratio of hue's frequency in the iamge to
   //the frequency of the most frequent hue in the image
-  const scaleLength = (num, max) => {
-    return Math.round((num/max) * plotLength)
+  const scaleLength = (num, min, max) => {
+    if (num === 0) {
+      return 0
+    }
+    const plotMin = Math.round(plotLength/10)
+    
+    // const result = (num - min) * (plotLength - plotMin) / (max - min) + plotMin;
+
+    const result = Math.round((num/max) * plotLength)
+    return result
+    
   }
 
   //iteratively plot hues based on provided image HLS data
   const plotHues = (imgData) => {
-    const max = getShortestLongest(imgData)[1];
-  
+    const [min, max] = getShortestLongest(imgData);
+    console.log(max)
     const keys = Object.keys(imgData);
     
     const radius = Math.round(diameter/2)
     return(
        keys.map( key =>
-        plotHue(parseInt(key), scaleLength(imgData[key].length, max), circleXY, radius)
+        plotHue(parseInt(key), scaleLength(imgData[key].length, min, max), circleXY, radius)
         )
     )
   }
@@ -306,11 +337,13 @@ function App() {
 
           return (
         <Image
-          width={Math.round(windowWidth / 2)} 
-          height={scaleImageHeight(Math.round(windowWidth / 2), imageRef.current.width, imageRef.current.height)} 
+          ref={outputRef}
+          width={Math.round(windowWidth / 3)} 
+          height={scaleImageDimension(Math.round(windowWidth / 3), imageRef.current.width, imageRef.current.height)} 
           x={circleXY[0] * 2} 
           y={Math.round(circleXY[1]/2)}
           image={imageCanvas}
+          onClick={handleImageClick}
           />
       )
 
