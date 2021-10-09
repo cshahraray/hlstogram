@@ -43,7 +43,7 @@ function App() {
   const [diameter, setDiameter] = useState(Math.round(windowHeight/5))
   const plotLength = Math.round(windowHeight/4);
   const maxImgWidth = Math.round(windowWidth/3)
-  const maxImgHeight = Math.round(windowHeight/3)
+  const maxImgHeight = Math.round(windowHeight/2)
   const [outputHeight, setOutputHeight] = useState(null)
   const [outputWidth, setOutputWidth] = useState(null)
 
@@ -80,31 +80,39 @@ function App() {
     setSelectedHuesArr([])
   }
 
+
+  const resizeImg = () => {
+
+  }
   //handles file reading
   //runs asynchronously after file upload as image onload function
-  const fetchImageData =  (image) => {
+  const fetchImageData =  () => {
     var canvas = document.createElement('canvas')
     var ctx = canvas.getContext('2d');
-    // const origWidth = image.width;
-    // const origHeight = image.height;
-    // let outputWidth1, outputHeight1;
-    // if (origWidth >= origHeight && origWidth > maxImgWidth) {
-    //   outputWidth1 = maxImgWidth
-    //   outputHeight1 = scaleImageDimension(outputWidth1, origWidth, origHeight)
-    // } else if (origHeight > maxImgHeight ) {
-    //   outputHeight1 = maxImgHeight
-    //   outputWidth1 = scaleImageDimension(outputHeight1, origHeight, origWidth)
-    // }
-    // setOutputWidth(outputWidth1)
-    // setOutputHeight(outputHeight1)
-    // console.log("height ", outputHeight)
-    // console.log("width ", outputWidth)
-    // imageRef.current.width = 500;
+    const origWidth = imageRef.current.width;
+    const origHeight = imageRef.current.height;
+    let outputWidth1, outputHeight1;
+    if (origWidth >= origHeight && origWidth > maxImgWidth) {
+      outputWidth1 = maxImgWidth
+      outputHeight1 = scaleImageDimension(outputWidth1, origWidth, origHeight)
+      setOutputWidth(outputWidth1)
+      setOutputHeight(outputHeight1)
+    } else if (origHeight > maxImgHeight ) {
+      outputHeight1 = maxImgHeight
+      outputWidth1 = scaleImageDimension(outputHeight1, origHeight, origWidth)
+    } else {
+      outputHeight1 = origHeight;
+      outputWidth1 = origWidth;
+    }
+    setOutputWidth(outputWidth1)
+    setOutputHeight(outputHeight1) 
+    console.log("height ", outputHeight1)
+    console.log("width ", outputWidth1)
     // imageRef.current.height = scaleImageHeight(500, origWidth, origHeight)
-    canvas.height = image.height
-    canvas.width = image.width
+    canvas.height = outputHeight1
+    canvas.width = outputWidth1
     // console.log("image width", image.width)
-    ctx.drawImage(image, 0,0, canvas.width, canvas.height);
+    ctx.drawImage(imageRef.current, 0,0, outputWidth1, outputHeight1);
     setImageData(ctx.getImageData(0, 0, canvas.width, canvas.height));
     setImageCanvas(canvas)
     
@@ -145,9 +153,9 @@ function App() {
       {
         imageRef.current = document.createElement('img')
         imageRef.current.src=(imageURL)
-        imageRef.current.onload=(() => fetchImageData(imageRef.current))
+        imageRef.current.onload=(() => fetchImageData())
       }
-  }, [imageUpload])
+  }, [imageUpload, imageURL])
 
   //useEffect hook which fires after image data has been loaded and saved to
   //component state by fetchImageData onload method to analyze the image
@@ -172,8 +180,8 @@ function App() {
       if (imageRef.current && imageData) {
         const canvas = document.createElement('canvas')
         const context = canvas.getContext('2d')
-        canvas.height = imageRef.current.height
-        canvas.width = imageRef.current.width
+        canvas.height = outputHeight
+        canvas.width = outputWidth
         context.putImageData(imageData, 0, 0)
         if (selectedHuesArr.length > 0) {
           adjustImage(canvas, context)
@@ -269,19 +277,13 @@ function App() {
   //create graph bars around a circle to visualize hue frequency
   //by calculating a polygon's points using radial geometry 
   const plotHue = (hueAngle, length, circleCenter, radius) => {
-    // console.log(length)
-
     const endDist = radius + length;
-    // console.log('hue Angle', hueAngle)
-    // console.log('radius', radius)
-    // console.log('circle center', circleCenter)
-    // console.log('length', length)
+
     const startpt1 = getCirclePoint(hueAngle, radius, circleCenter)
     const startpt2 = getCirclePoint(hueAngle+4, radius, circleCenter)
     const endpt1 = getCirclePoint(hueAngle, endDist, circleCenter)
     const endpt2 = getCirclePoint(hueAngle+4, endDist, circleCenter)
-    // console.log(startpt1, startpt2, endpt1, endpt2)
-    // return [startpt1[0], startpt1[1], endpt1[0], endpt1[1], endpt2[0], endpt2[1], startpt2[0], startpt2[1]]
+
     if (!selectedHuesArr.includes(hueAngle.toString()))
     {
       return (
@@ -314,10 +316,7 @@ function App() {
     if (num === 0) {
       return 0
     }
-    const plotMin = Math.round(plotLength/10)
     
-    // const result = (num - min) * (plotLength - plotMin) / (max - min) + plotMin;
-
     const result = Math.round((num/max) * plotLength)
     return result
     
@@ -338,13 +337,13 @@ function App() {
   }
 
   const renderImage = () => {
-    if (imageCanvas) {
+    if (imageRef.current && imageCanvas) {
 
           return (
         <Image
           ref={outputRef}
-          width={Math.round(windowWidth / 3)} 
-          height={scaleImageDimension(Math.round(windowWidth / 3), imageRef.current.width, imageRef.current.height)} 
+          width={imageCanvas.width} 
+          height={imageCanvas.height} 
           x={circleXY[0] * 2} 
           y={Math.round(circleXY[1]/2)}
           image={imageCanvas}
