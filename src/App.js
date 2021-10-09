@@ -85,22 +85,26 @@ function App() {
   const fetchImageData =  (image) => {
     var canvas = document.createElement('canvas')
     var ctx = canvas.getContext('2d');
-    const origWidth = image.width;
-    const origHeight = image.height;
-    let outputWidth1, outputHeight1;
-    if (origWidth >= origHeight && origWidth > maxImgWidth) {
-      outputWidth1 = maxImgWidth
-      outputHeight1 = scaleImageDimension(outputWidth1, origWidth, origHeight)
-    } else if (origHeight > maxImgHeight ) {
-      outputHeight1 = maxImgHeight
-      outputWidth1 = scaleImageDimension(outputHeight1, origHeight, origWidth)
-    }
+    // const origWidth = image.width;
+    // const origHeight = image.height;
+    // let outputWidth1, outputHeight1;
+    // if (origWidth >= origHeight && origWidth > maxImgWidth) {
+    //   outputWidth1 = maxImgWidth
+    //   outputHeight1 = scaleImageDimension(outputWidth1, origWidth, origHeight)
+    // } else if (origHeight > maxImgHeight ) {
+    //   outputHeight1 = maxImgHeight
+    //   outputWidth1 = scaleImageDimension(outputHeight1, origHeight, origWidth)
+    // }
+    // setOutputWidth(outputWidth1)
+    // setOutputHeight(outputHeight1)
+    // console.log("height ", outputHeight)
+    // console.log("width ", outputWidth)
     // imageRef.current.width = 500;
     // imageRef.current.height = scaleImageHeight(500, origWidth, origHeight)
-    canvas.height = outputHeight
-    canvas.width = outputWidth
+    canvas.height = image.height
+    canvas.width = image.width
     // console.log("image width", image.width)
-    ctx.drawImage(image, 0,0,outputWidth, outputHeight);
+    ctx.drawImage(image, 0,0, canvas.width, canvas.height);
     setImageData(ctx.getImageData(0, 0, canvas.width, canvas.height));
     setImageCanvas(canvas)
     
@@ -129,17 +133,18 @@ function App() {
     }
 
     const handleImageClick = (e) => {
-      console.log(e)
-      console.log(outputRef.current)
+      // console.log(e)
+      // console.log(outputRef.current)
 
     }
   
   //useEffect hooks
   //useEffect hook to set up reading the image pixel data
   useEffect(() => {
-      if(imageRef.current && imageUpload) 
+      if(imageUpload) 
       {
-        imageRef.current.src=(imageURL);
+        imageRef.current = document.createElement('img')
+        imageRef.current.src=(imageURL)
         imageRef.current.onload=(() => fetchImageData(imageRef.current))
       }
   }, [imageUpload])
@@ -414,11 +419,7 @@ function App() {
 
 
     </Stage>
-    <div style={{display: "none"}}>
-      <img id="image-upload" ref={imageRef} alt="hello"></img>
-      <canvas id="canvas"></canvas>
-    {/* <img id="image-upload" ref={imageRef} alt="hello"></img> */}
-    </div>
+   
     </>
     
   );
