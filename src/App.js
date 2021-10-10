@@ -37,6 +37,7 @@ function App() {
   const [selectedHues, setSelectedHues] = useState({})
   const [selectedHuesArr, setSelectedHuesArr] = useState([]); //
     //store and manipulate image data for the outputed image
+  const [origImageCanvas, setOrigImageCanvas] = useState(null);
   const [imageCanvas, setImageCanvas] = useState(null);
 
     //misc. values used in visualiaztion and for layout
@@ -79,14 +80,12 @@ function App() {
     }
     setOutputWidth(outputWidth1)
     setOutputHeight(outputHeight1) 
-    console.log("height ", outputHeight1)
-    console.log("width ", outputWidth1)
-    // imageRef.current.height = scaleImageHeight(500, origWidth, origHeight)
     canvas.height = outputHeight1
     canvas.width = outputWidth1
     // console.log("image width", image.width)
     ctx.drawImage(imageRef.current, 0,0, outputWidth1, outputHeight1);
     setImageData(ctx.getImageData(0, 0, canvas.width, canvas.height));
+    setOrigImageCanvas(canvas)
     setImageCanvas(canvas)
     
   }
@@ -118,7 +117,7 @@ function App() {
       let offsetY = Math.round(mousePos[1] - outputRef.current.attrs.y)
       console.log(offsetX, offsetY)
 
-      let ctx = imageCanvas.getContext('2d')
+      let ctx = origImageCanvas.getContext('2d')
       let pixelData = ctx.getImageData(offsetX, offsetY, 1, 1).data
       console.log(pixelData)
       const color = getPixelColor(pixelData[0], pixelData[1], pixelData[2])
