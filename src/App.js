@@ -1,18 +1,15 @@
-import logo from './logo.svg';
-import './App.css';
 import { useEffect, useRef, useState } from 'react';
 import Button from '@material-ui/core/Button';
-import { convertHSL2RGB, getPixelColor, hslToRgb, rgbToHsl } from './util/colorspace_utils';
+import { getPixelColor } from './util/colorspace_utils';
 import { Image, Circle, Layer, Line, Stage } from 'react-konva';
 import { Html } from 'react-konva-utils';
 import { getShortestLongest } from './util/object-utils';
 import { getCirclePoint } from './util/circle_utils';
 import { getOneShadeColor } from './util/shade_utils';
-
-import ImageAdjust from './imageAdjust';
 import { adjustImage } from './util/canvas-utils';
 import { getImageHLSInfo, pseudoQuantize } from './util/imagedata-utils';
-import html2canvas from 'html2canvas';
+
+import ImageAdjust from './imageAdjust';
 
 
 function App() {
@@ -61,8 +58,6 @@ function App() {
   }
 
 
-  const resizeImg = () => {
-  }
   //handles file reading
   //runs asynchronously after file upload as image onload function
   const fetchImageData =  () => {
@@ -112,6 +107,18 @@ function App() {
       // console.log(selectedHues)
     }
 
+    
+    //event method + helper method to get hue of pixel @ mouse click &
+    //add or remove that hue from our selectedHues state variables
+    const handleImageClick = (e) => {
+      const mousePos = [e.evt.clientX, e.evt.clientY]
+      let hue = calculatePixelHue(mousePos)
+      while (hue % 5 !== 0){
+        hue--;
+      }
+      handleHuesClick(hue, selectedHues)
+    }
+
     const calculatePixelHue = (mousePos) => {
       let offsetX = Math.round(mousePos[0] - outputRef.current.attrs.x)
       let offsetY = Math.round(mousePos[1] - outputRef.current.attrs.y)
@@ -124,15 +131,6 @@ function App() {
 
       return color.h;
 
-    }
-
-    const handleImageClick = (e) => {
-      const mousePos = [e.evt.clientX, e.evt.clientY]
-      let hue = calculatePixelHue(mousePos)
-      while (hue % 5 !== 0){
-        hue--;
-      }
-      handleHuesClick(hue, selectedHues)
     }
   
   //useEffect hooks
@@ -242,6 +240,8 @@ function App() {
   }
 
   //iteratively plot hues based on provided image HLS data
+  //split up render of the unselected and selected hues on the graph
+  //so that the stroke of selected hues renders properly
   const plotUnselectedHues = (imgData) => {
     const [min, max] = getShortestLongest(imgData);
     const unselected = Object.keys(imgData).filter(key => !selectedHuesArr.includes(key))
@@ -355,8 +355,6 @@ function App() {
     {imageData && renderImage()}
 
     
-    </Layer>
-    <Layer>
     </Layer>
   
 

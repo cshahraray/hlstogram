@@ -1,5 +1,5 @@
 import { hslToRgb } from "@material-ui/core"
-import { dist2Sat, getCirclePoint, getDeltas, getDist } from "./circle_utils"
+import {getCirclePoint } from "./circle_utils"
 
 //math helper methods
 export const getDistFromSat = (sat, radius) => {
