@@ -12,6 +12,7 @@ import { getOneShadeColor } from './util/shade_utils';
 import ImageAdjust from './imageAdjust';
 import { adjustImage } from './util/canvas-utils';
 import { getImageHLSInfo, pseudoQuantize } from './util/imagedata-utils';
+import html2canvas from 'html2canvas';
 
 
 function App() {
@@ -42,10 +43,10 @@ function App() {
   const windowWidth = window.innerWidth;
   const windowHeight= window.innerHeight;
   const circleXY = [Math.round(windowWidth/4), Math.round(windowHeight/2)];
-  const [diameter, setDiameter] = useState(Math.round(windowHeight/5))
-  const plotLength = Math.round(windowHeight/4);
-  const maxImgWidth = Math.round(windowWidth * (3/8))
-  const maxImgHeight = Math.round(windowHeight * (4/8))
+  const [diameter, setDiameter] = useState(Math.round(windowHeight/8))
+  const plotLength = Math.round(windowHeight * .7);
+  const maxImgWidth = Math.round(windowWidth * (1/3))
+  const maxImgHeight = Math.round(windowHeight * .7)
   const [outputHeight, setOutputHeight] = useState(null)
   const [outputWidth, setOutputWidth] = useState(null)
 
@@ -112,10 +113,27 @@ function App() {
       // console.log(selectedHues)
     }
 
-    const handleImageClick = (e) => {
-      // console.log(e)
-      // console.log(outputRef.current)
+    const calculatePixelHue = (mousePos) => {
+      let offsetX = Math.round(mousePos[0] - outputRef.current.attrs.x)
+      let offsetY = Math.round(mousePos[1] - outputRef.current.attrs.y)
+      console.log(offsetX, offsetY)
 
+      let ctx = imageCanvas.getContext('2d')
+      let pixelData = ctx.getImageData(offsetX, offsetY, 1, 1).data
+      console.log(pixelData)
+      const color = getPixelColor(pixelData[0], pixelData[1], pixelData[2])
+
+      return color.h;
+
+    }
+
+    const handleImageClick = (e) => {
+      const mousePos = [e.evt.clientX, e.evt.clientY]
+      let hue = calculatePixelHue(mousePos)
+      while (hue % 5 !== 0){
+        hue--;
+      }
+      handleHuesClick(hue, selectedHues)
     }
   
   //useEffect hooks
@@ -189,35 +207,28 @@ function App() {
     const endDist = radius + length;
 
     const startpt1 = getCirclePoint(hueAngle, radius, circleCenter)
-    const startpt2 = getCirclePoint(hueAngle+4, radius, circleCenter)
+    const startpt2 = getCirclePoint(hueAngle+5, radius, circleCenter)
     const endpt1 = getCirclePoint(hueAngle, endDist, circleCenter)
-    const endpt2 = getCirclePoint(hueAngle+4, endDist, circleCenter)
+    const endpt2 = getCirclePoint(hueAngle+5, endDist, circleCenter)
 
-    if (!selectedHuesArr.includes(hueAngle.toString()))
-    {
+    let selected = selectedHuesArr.includes(hueAngle.toString())
+
+    
       return (
         <Line
           key={hueAngle}
           points={[startpt1[0], startpt1[1], endpt1[0], endpt1[1], endpt2[0], endpt2[1], startpt2[0], startpt2[1]]}
           closed={true}
-          fill={getOneShadeColor(hueAngle, 100, 50)} 
+          fill={selected ? getOneShadeColor(hueAngle, 100, 60) : getOneShadeColor(hueAngle,75,50)} 
           onClick={handleHuesClick.bind(this, hueAngle, selectedHues)}
-          
+          bezier={true}
+          stroke={getOneShadeColor(((hueAngle+180) % 360), 100, 40)}
+          strokeEnabled={selected}
         />
       )
-    } else {
-      return (
-        <Line
-          key={hueAngle}
-          points={[startpt1[0], startpt1[1], endpt1[0], endpt1[1], endpt2[0], endpt2[1], startpt2[0], startpt2[1]]}
-          closed={true}
-          fill={getOneShadeColor(hueAngle, 100, 50)} 
-          onClick={handleHuesClick.bind(this, hueAngle, selectedHues)}
-          stroke={'black'}
-        />
-      )
-    }
+    
   }
+  
 
   //scale plot length of hues based on the ratio of hue's frequency in the iamge to
   //the frequency of the most frequent hue in the image
@@ -232,18 +243,29 @@ function App() {
   }
 
   //iteratively plot hues based on provided image HLS data
-  const plotHues = (imgData) => {
+  const plotUnselectedHues = (imgData) => {
     const [min, max] = getShortestLongest(imgData);
-    console.log(max)
-    const keys = Object.keys(imgData);
-    
+    const unselected = Object.keys(imgData).filter(key => !selectedHuesArr.includes(key))
+   
     const radius = Math.round(diameter/2)
     return(
-       keys.map( key =>
+      unselected.map( key =>
         plotHue(parseInt(key), scaleLength(imgData[key].length, min, max), circleXY, radius)
-        )
+      )
     )
   }
+
+  const plotSelectedHues = (imgData) => {
+    const [min, max] = getShortestLongest(imgData);
+    const selected = Object.keys(imgData).filter(key => selectedHuesArr.includes(key))
+    const radius = Math.round(diameter/2)
+    return(
+      selected.map( key =>
+        plotHue(parseInt(key), scaleLength(imgData[key].length, min, max), circleXY, radius)
+      )
+    )
+  }
+
 
   const renderImage = () => {
     if (imageRef.current && imageCanvas) {
@@ -253,8 +275,8 @@ function App() {
           ref={outputRef}
           width={imageCanvas.width} 
           height={imageCanvas.height} 
-          x={circleXY[0] * 2} 
-          y={Math.round(circleXY[1]/2)}
+          x={circleXY[0] + diameter/2 + (plotLength*.7)} 
+          y={Math.round(circleXY[1]/3)}
           image={imageCanvas}
           onClick={handleImageClick}
           />
@@ -281,7 +303,8 @@ function App() {
     <>
     <Stage
       width = {windowWidth}
-      height = {windowHeight}>
+      height = {windowHeight}
+      >
 
       <Layer>
       
@@ -289,7 +312,7 @@ function App() {
         <Html>
           <Button
             component = "label"
-            type= "contained">
+            type={"contained"}>
           <input
             type="file"
             accept="image/*"
@@ -299,18 +322,28 @@ function App() {
           />  
           Upload image
           </Button>
+
+          {(imageData && selectedHuesArr.length > 0) &&
+          <Button 
+            type = {"contained"}
+            onClick = {() => {
+              setSelectedHues({})
+              setSelectedHuesArr([])
+            }}
+            >
+              Reset Hue Selection
+            </Button>
+          }
     
     
 
     {/* </div> */}
     </Html>
     
-      {/* {plotHue(9, 64, circleXY, diameter/2)} */}
-      {/* {plotHue(59, 122, circleXY, diameter/2)} */}
+      {/* draw and call the bars seperately so stroke shows up properly */}
+      {quantizedHLSImageData &&  plotUnselectedHues(quantizedHLSImageData)}
+      {quantizedHLSImageData &&  plotSelectedHues(quantizedHLSImageData)}
 
-      {/* {plotHue(120, 88, circleXY, diameter/2)} */}
-      {/* {plotHue(270, (plotLength/2), circleXY, diameter/2)} */}
-      {quantizedHLSImageData &&  plotHues(quantizedHLSImageData)}
       <Circle key={'centerCircle'}
         ref={centerCircleRef}
         x={circleXY[0]}
@@ -324,6 +357,9 @@ function App() {
 
     
     </Layer>
+    <Layer>
+    </Layer>
+  
 
 
     </Stage>
