@@ -59,7 +59,7 @@ function App() {
 
 
   //handles file reading
-  //runs asynchronously after file upload as image onload function
+  //runs  after file upload (asynch) as image onload function
   const fetchImageData =  () => {
     var canvas = document.createElement('canvas')
     var ctx = canvas.getContext('2d');
@@ -83,6 +83,15 @@ function App() {
     setOrigImageCanvas(canvas)
     setImageCanvas(canvas)
     
+  }
+
+  const downloadImg = (uri, name) => {
+   let link = document.createElement('a')
+   link.download = name;
+   link.href = uri;
+   document.body.appendChild(link);
+   link.click();
+   document.body.removeChild(link)
   }
 
   //event method for hue click, adds or removes hues from list of focus hues
@@ -293,6 +302,36 @@ function App() {
     }
   }
 
+  //misc. elements
+
+  //conditionally render buttons for to reset hue selection and image download link
+
+  const renderButtons= () => {
+    return ( 
+    <>
+    <Button 
+      type = {"contained"}
+      onClick = {() => {
+        setSelectedHues({})
+        setSelectedHuesArr([])
+      }}
+      >
+        Reset Hue Selection
+      </Button>
+      <Button 
+      type = {"contained"}
+      onClick = {() => {
+        const url = imageCanvas.toDataURL('image/jpeg', 1.0)
+        downloadImg(url, 'hlstogram-output.jpeg')
+      }}
+      >
+        Download Your Image
+      </Button>
+      </>
+      )
+
+  }
+
 
 
 
@@ -323,15 +362,7 @@ function App() {
           </Button>
 
           {(imageData && selectedHuesArr.length > 0) &&
-          <Button 
-            type = {"contained"}
-            onClick = {() => {
-              setSelectedHues({})
-              setSelectedHuesArr([])
-            }}
-            >
-              Reset Hue Selection
-            </Button>
+            renderButtons()
           }
     
     
