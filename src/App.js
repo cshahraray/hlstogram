@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useReducer, useState } from 'react';
 import Button from '@material-ui/core/Button';
 import { getPixelColor } from './util/colorspace_utils';
 import { Image, Circle, Layer, Line, Stage } from 'react-konva';
@@ -7,6 +7,7 @@ import { getShortestLongest } from './util/object-utils';
 import { getCirclePoint } from './util/circle_utils';
 import { getOneShadeColor } from './util/shade_utils';
 import { adjustImage } from './util/canvas-utils';
+import { selectedHuesReducer, HUE_ACTIONS } from './reducers/selectedHues-reducer'
 import { getImageHLSInfo, pseudoQuantize } from './util/imagedata-utils';
 
 import ImageAdjust from './imageAdjust';
@@ -33,20 +34,39 @@ function App() {
     //(can be refactored using useReducer hook to resolve this isssue as well)
   const [selectedHues, setSelectedHues] = useState({})
   const [selectedHuesArr, setSelectedHuesArr] = useState([]); //
-    //store and manipulate image data for the outputed image
+  
+  const [selectedHuesRefactor, huesDispatch] = useReducer(selectedHuesReducer, {})
+  
+  //store and manipulate image data for the outputed image
   const [origImageCanvas, setOrigImageCanvas] = useState(null);
   const [imageCanvas, setImageCanvas] = useState(null);
 
     //misc. values used in visualiaztion and for layout
   const windowWidth = window.innerWidth;
   const windowHeight= window.innerHeight;
-  const circleXY = [Math.round(windowWidth/4), Math.round(windowHeight/2)];
+  const circleXY = [Math.round(windowWidth/6), Math.round(windowHeight/3)];
   const [diameter, setDiameter] = useState(Math.round(windowHeight/8))
-  const plotLength = Math.round(windowHeight * .7);
+  const plotLength = Math.round(windowHeight / 3);
   const maxImgWidth = Math.round(windowWidth * (1/3))
   const maxImgHeight = Math.round(windowHeight * .7)
   const [outputHeight, setOutputHeight] = useState(null)
   const [outputWidth, setOutputWidth] = useState(null)
+
+    //reducer actions
+  const addHue = (hue) => {
+    huesDispatch({
+      type: HUE_ACTIONS.ADD_HUE,
+      hue
+    })
+  }
+
+  const removeHue = (hue) => {
+    huesDispatch({
+      type: HUE_ACTIONS.REMOVE_HUE,
+      hue
+    })
+  }
+  
 
   //EVENT METHODS
   //event method for file upload
@@ -55,6 +75,7 @@ function App() {
     setImageURL(URL.createObjectURL(e.target.files[0]))
     setSelectedHues({}) //reset hue selection upon new file upload
     setSelectedHuesArr([])
+    
   }
 
 
@@ -227,7 +248,7 @@ function App() {
           closed={true}
           fill={selected ? getOneShadeColor(hueAngle, 100, 60) : getOneShadeColor(hueAngle,75,50)} 
           onClick={handleHuesClick.bind(this, hueAngle, selectedHues)}
-          bezier={true}
+          bezier={false}
           stroke={getOneShadeColor(((hueAngle+180) % 360), 100, 40)}
           strokeEnabled={selected}
         />
@@ -283,8 +304,8 @@ function App() {
           ref={outputRef}
           width={imageCanvas.width} 
           height={imageCanvas.height} 
-          x={circleXY[0] + diameter/2 + (plotLength*.7)} 
-          y={Math.round(circleXY[1]/3)}
+          x={circleXY[0] + diameter/2 + (plotLength)} 
+          y={Math.round(windowHeight / 5)}
           image={imageCanvas}
           onClick={handleImageClick}
           />
