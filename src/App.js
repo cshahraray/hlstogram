@@ -42,8 +42,8 @@ function App() {
     //misc. values used in visualiaztion and for layout
   const windowWidth = window.innerWidth;
   const windowHeight= window.innerHeight;
-  const circleXY = [Math.round(windowWidth/6), Math.round(windowHeight/3)];
-  const [diameter, setDiameter] = useState(Math.round(windowHeight/8))
+  const circleXY = [Math.round(windowWidth/6), Math.round(windowHeight * .4)];
+  const [diameter, setDiameter] = useState(Math.round(windowHeight/6))
   const plotLength = Math.round(windowHeight / 3);
   const maxImgWidth = Math.round(windowWidth * (1/3))
   const maxImgHeight = Math.round(windowHeight * .7)
@@ -250,12 +250,14 @@ function App() {
   //scale plot length of hues based on the ratio of hue's frequency in the iamge to
   //the frequency of the most frequent hue in the image
   const scaleLength = (num, min, max) => {
-    if (num === 0) {
+    if (num < 350) {  
       return 0
     }
+
+    const minim = Math.round(plotLength * .1)
     
     const result = Math.round((num/max) * plotLength)
-    return result
+    return minim + (result * .8)
     
   }
 
@@ -294,7 +296,7 @@ function App() {
           ref={outputRef}
           width={imageCanvas.width} 
           height={imageCanvas.height} 
-          x={circleXY[0] + diameter/2 + (plotLength)} 
+          x={circleXY[0] + diameter + (plotLength)} 
           y={Math.round(windowHeight / 5)}
           image={imageCanvas}
           onClick={handleImageClick}

@@ -1,6 +1,9 @@
 # hlstogram
 ## [Try it out!](https://hlstogram.herokuapp.com)
 
+### Video Demo
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/4ctTq_liXEs" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 ### Background and Overview:
 
 Hlstogram is a frontend javascript project which uses the Canvas API to calculate the frequency of hues in a user uploaded image and generates a circular 'histogram' visualiazation of the frequency of these hues in an image using the Konva library.
