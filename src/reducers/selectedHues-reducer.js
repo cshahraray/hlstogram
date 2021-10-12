@@ -1,8 +1,7 @@
 export const HUE_ACTIONS = {
     ADD_HUE: 'ADD_HUE',
     REMOVE_HUE: 'REMOVE_HUE',
-
-
+    RESET_HUES: 'RESET_HUES'
 }
 
 export function selectedHuesReducer(state = {}, action) {
@@ -19,6 +18,9 @@ export function selectedHuesReducer(state = {}, action) {
                 delete newState[action.hue + i];
             }
             return newState;
+        
+        case HUE_ACTIONS.RESET_HUES:
+            return {}
     
         default: 
             return state;

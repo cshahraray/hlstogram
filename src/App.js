@@ -28,14 +28,11 @@ function App() {
   const [quantizedHLSImageData, setQuantizedImageHLSData] = useState(null);
   const [imageHLSData, setImageHLSData] = useState(null);
 
-    //information about selected hues
-    //used JSON to easily add and remove values
-    //Array version b/c react can't read changes in JSON as easily
-    //(can be refactored using useReducer hook to resolve this isssue as well)
-  const [selectedHues, setSelectedHues] = useState({})
-  const [selectedHuesArr, setSelectedHuesArr] = useState([]); //
-  
-  const [selectedHuesRefactor, huesDispatch] = useReducer(selectedHuesReducer, {})
+  //information about selected hues:
+  //used JSON to easily add and remove values
+  //useReducer hook so that React can read changes
+  // in variable for useEffect hook
+  const [selectedHues, huesDispatch] = useReducer(selectedHuesReducer, {})
   
   //store and manipulate image data for the outputed image
   const [origImageCanvas, setOrigImageCanvas] = useState(null);
@@ -66,6 +63,12 @@ function App() {
       hue
     })
   }
+
+  const resetHues = () => {
+    huesDispatch({
+      type: HUE_ACTIONS.RESET_HUES
+    })
+  }
   
 
   //EVENT METHODS
@@ -73,9 +76,7 @@ function App() {
   const handleFileChange = (e) => {
     setImageUpload(e.target.files[0])
     setImageURL(URL.createObjectURL(e.target.files[0]))
-    setSelectedHues({}) //reset hue selection upon new file upload
-    setSelectedHuesArr([])
-    
+    resetHues() //reset hue selection upon new file upload
   }
 
 
@@ -116,26 +117,16 @@ function App() {
   }
 
   //event method for hue click, adds or removes hues from list of focus hues
-  const handleHuesClick = (hueAngle, hues) => {
 
-      if (!hues[hueAngle]) {
-        hues[hueAngle] = true
-        hues[hueAngle+1] = true
-        hues[hueAngle+2] = true
-        hues[hueAngle+3] = true
-        hues[hueAngle+4] = true
+      const handleHuesClick = (hue) => {
+        if (!selectedHues[hue]) {
+          addHue(hue)
+          // console.log('true')
 
-      } else {
-        delete hues[hueAngle] 
-        delete hues[hueAngle+1]
-        delete hues[hueAngle+2]
-        delete hues[hueAngle+3]
-        delete hues[hueAngle+4]
+        } else {
+          removeHue(hue)
+        }
       }
-      setSelectedHues(hues)
-      setSelectedHuesArr(Object.keys(selectedHues))
-      // console.log(selectedHues)
-    }
 
     
     //event method + helper method to get hue of pixel @ mouse click &
@@ -146,7 +137,7 @@ function App() {
       while (hue % 5 !== 0){
         hue--;
       }
-      handleHuesClick(hue, selectedHues)
+      handleHuesClick(hue)
     }
 
     const calculatePixelHue = (mousePos) => {
@@ -172,7 +163,7 @@ function App() {
         imageRef.current.src=(imageURL)
         imageRef.current.onload=(() => fetchImageData())
       }
-  }, [imageUpload, imageURL])
+  }, [imageUpload])
 
   //useEffect hook which fires after image data has been loaded and saved to
   //component state by fetchImageData onload method to analyze the image
@@ -200,13 +191,14 @@ function App() {
         canvas.height = outputHeight
         canvas.width = outputWidth
         context.putImageData(imageData, 0, 0)
-        if (selectedHuesArr.length > 0) {
-          adjustImage(canvas, context, selectedHuesArr)
+        if (Object.keys(selectedHues).length > 0) {
+          adjustImage(canvas, context, Object.keys(selectedHues))
         }
         setImageCanvas(canvas)
+        console.log(selectedHues)
       }
   
-    }, [selectedHuesArr])
+    }, [selectedHues])
 
 
   //misc method for scaling image heights
@@ -230,7 +222,7 @@ function App() {
 
   //create graph bars around a circle to visualize hue frequency
   //by calculating a polygon's points using radial geometry 
-  const plotHue = (hueAngle, length, circleCenter, radius) => {
+  const plotHue = (hueAngle, length, circleCenter, radius, selected) => {
     const endDist = radius + length;
 
     const startpt1 = getCirclePoint(hueAngle, radius, circleCenter)
@@ -238,7 +230,7 @@ function App() {
     const endpt1 = getCirclePoint(hueAngle, endDist, circleCenter)
     const endpt2 = getCirclePoint(hueAngle+5, endDist, circleCenter)
 
-    let selected = selectedHuesArr.includes(hueAngle.toString())
+    // let selected = Object.keys(selectedHues).includes(hueAngle.toString())
 
     
       return (
@@ -247,7 +239,7 @@ function App() {
           points={[startpt1[0], startpt1[1], endpt1[0], endpt1[1], endpt2[0], endpt2[1], startpt2[0], startpt2[1]]}
           closed={true}
           fill={selected ? getOneShadeColor(hueAngle, 100, 60) : getOneShadeColor(hueAngle,75,50)} 
-          onClick={handleHuesClick.bind(this, hueAngle, selectedHues)}
+          onClick={handleHuesClick.bind(this, hueAngle)}
           bezier={false}
           stroke={getOneShadeColor(((hueAngle+180) % 360), 100, 40)}
           strokeEnabled={selected}
@@ -274,23 +266,23 @@ function App() {
   //so that the stroke of selected hues renders properly
   const plotUnselectedHues = (imgData) => {
     const [min, max] = getShortestLongest(imgData);
-    const unselected = Object.keys(imgData).filter(key => !selectedHuesArr.includes(key))
+    const unselected = Object.keys(imgData).filter(key => !selectedHues.hasOwnProperty(key))
    
     const radius = Math.round(diameter/2)
     return(
       unselected.map( key =>
-        plotHue(parseInt(key), scaleLength(imgData[key].length, min, max), circleXY, radius)
+        plotHue(parseInt(key), scaleLength(imgData[key].length, min, max), circleXY, radius, false)
       )
     )
   }
 
   const plotSelectedHues = (imgData) => {
     const [min, max] = getShortestLongest(imgData);
-    const selected = Object.keys(imgData).filter(key => selectedHuesArr.includes(key))
+    const selected = Object.keys(imgData).filter(key => selectedHues.hasOwnProperty(key))
     const radius = Math.round(diameter/2)
     return(
       selected.map( key =>
-        plotHue(parseInt(key), scaleLength(imgData[key].length, min, max), circleXY, radius)
+        plotHue(parseInt(key), scaleLength(imgData[key].length, min, max), circleXY, radius, true)
       )
     )
   }
@@ -325,7 +317,7 @@ function App() {
 
   //misc. elements
 
-  //conditionally render buttons for to reset hue selection and image download link
+  //render buttons for to reset hue selection and image download link
 
   const renderButtons= () => {
     return ( 
@@ -333,8 +325,7 @@ function App() {
     <Button 
       type = {"contained"}
       onClick = {() => {
-        setSelectedHues({})
-        setSelectedHuesArr([])
+        resetHues()
       }}
       >
         Reset Hue Selection
@@ -382,8 +373,8 @@ function App() {
           Upload image
           </Button>
 
-          {(imageData && selectedHuesArr.length > 0) &&
-            renderButtons()
+          {(imageData && Object.keys(selectedHues).length > 0)
+           && renderButtons()
           }
     
     
