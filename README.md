@@ -2,7 +2,7 @@
 ## [Try it out!](https://hlstogram.herokuapp.com)
 
 ### Video Demo
-<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/4ctTq_liXEs" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+[![Video Demo image](http://img.youtube.com/vi/4ctTq_liXEs/0.jpg)](http://www.youtube.com/watch?v=4ctTq_liXEs "HlstogramDemo")
 
 ### Background and Overview:
 
