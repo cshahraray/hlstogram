@@ -20,11 +20,12 @@ function App() {
   const imageRef = useRef(null);
   const outputRef = useRef(null)
   const centerCircleRef = useRef(null);
-    //handle image upload and file reading
-  const [imageUpload, setImageUpload] = useState(null);
+  
+  //handle image upload and file reading
   const [imageURL, setImageURL] = useState(null);
   const [imageData, setImageData] = useState(null);
-    //stores HLS information for visualiaztion
+  
+  //stores HLS information for visualiaztion
   const [quantizedHLSImageData, setQuantizedImageHLSData] = useState(null);
   const [imageHLSData, setImageHLSData] = useState(null);
 
@@ -34,7 +35,7 @@ function App() {
   // in variable for useEffect hook
   const [selectedHues, huesDispatch] = useReducer(selectedHuesReducer, {})
   
-  //store and manipulate image data for the outputed image
+  //store and manipulate canvas object for image display 
   const [origImageCanvas, setOrigImageCanvas] = useState(null);
   const [imageCanvas, setImageCanvas] = useState(null);
 
@@ -49,7 +50,7 @@ function App() {
   const [outputHeight, setOutputHeight] = useState(null)
   const [outputWidth, setOutputWidth] = useState(null)
 
-    //reducer actions
+    //dispatch actions
   const addHue = (hue) => {
     huesDispatch({
       type: HUE_ACTIONS.ADD_HUE,
@@ -74,7 +75,6 @@ function App() {
   //EVENT METHODS
   //event method for file upload
   const handleFileChange = (e) => {
-    setImageUpload(e.target.files[0])
     setImageURL(URL.createObjectURL(e.target.files[0]))
     resetHues() //reset hue selection upon new file upload
   }
@@ -121,8 +121,6 @@ function App() {
       const handleHuesClick = (hue) => {
         if (!selectedHues[hue]) {
           addHue(hue)
-          // console.log('true')
-
         } else {
           removeHue(hue)
         }
@@ -157,13 +155,13 @@ function App() {
   //useEffect hooks
   //useEffect hook to set up reading the image pixel data
   useEffect(() => {
-      if(imageUpload) 
+      if(imageURL) 
       {
         imageRef.current = document.createElement('img')
         imageRef.current.src=(imageURL)
         imageRef.current.onload=(() => fetchImageData())
       }
-  }, [imageUpload])
+  }, [imageURL])
 
   //useEffect hook which fires after image data has been loaded and saved to
   //component state by fetchImageData onload method to analyze the image
