@@ -1,7 +1,8 @@
 export const HUE_ACTIONS = {
     ADD_HUE: 'ADD_HUE',
     REMOVE_HUE: 'REMOVE_HUE',
-    RESET_HUES: 'RESET_HUES'
+    RESET_HUES: 'RESET_HUES',
+    INVERT_HUES: 'INVERT_HUES'
 }
 
 export function selectedHuesReducer(state = {}, action) {
@@ -21,6 +22,19 @@ export function selectedHuesReducer(state = {}, action) {
         
         case HUE_ACTIONS.RESET_HUES:
             return {}
+
+        case HUE_ACTIONS.INVERT_HUES:
+            newState = {}
+            let prevState = Object.assign({}, state)
+            const imgHues = action.imageHues
+
+            let inverted = imgHues.filter( hue => !prevState.hasOwnProperty(hue) )
+
+            inverted.forEach( hue => {
+                newState[hue] = true
+            });
+
+            return newState
     
         default: 
             return state;

@@ -39,7 +39,7 @@ function App() {
   const [origImageCanvas, setOrigImageCanvas] = useState(null);
   const [imageCanvas, setImageCanvas] = useState(null);
 
-    //misc. values used in visualiaztion and for layout
+  //misc. values used in visualiaztion and for layout
   const windowWidth = window.innerWidth;
   const windowHeight= window.innerHeight;
   const circleXY = [Math.round(windowWidth/6), Math.round(windowHeight * .4)];
@@ -49,8 +49,10 @@ function App() {
   const maxImgHeight = Math.round(windowHeight * .7)
   const [outputHeight, setOutputHeight] = useState(null)
   const [outputWidth, setOutputWidth] = useState(null)
+  const imageX = circleXY[0] + diameter + (plotLength);
+  const imageY = Math.round(windowHeight / 5);
 
-    //dispatch actions
+  //dispatch action creators
   const addHue = (hue) => {
     huesDispatch({
       type: HUE_ACTIONS.ADD_HUE,
@@ -70,6 +72,13 @@ function App() {
       type: HUE_ACTIONS.RESET_HUES
     })
   }
+
+  const invertHues = () => {
+    huesDispatch({
+      type: HUE_ACTIONS.INVERT_HUES,
+      imageHues: Object.keys(imageHLSData)
+    })
+  }
   
 
   //EVENT METHODS
@@ -83,8 +92,12 @@ function App() {
   //handles file reading
   //runs  after file upload (asynch) as image onload function
   const fetchImageData =  () => {
+    //create an image canvas
     var canvas = document.createElement('canvas')
     var ctx = canvas.getContext('2d');
+
+    //resize image to performance issues caused by
+    //large amt of data from obnoxiously large image uploads
     const origWidth = imageRef.current.width;
     const origHeight = imageRef.current.height;
     let outputWidth1, outputHeight1;
@@ -95,14 +108,24 @@ function App() {
       outputHeight1 = maxImgHeight
       outputWidth1 = scaleImageDimension(outputHeight1, origHeight, origWidth)
     }
+
+    //store resized image dimensions to state for 
+    //use in calculating layout sizes
     setOutputWidth(outputWidth1)
     setOutputHeight(outputHeight1) 
+
+    //set canvas size to resized image and
+    //draw image to canvas so that we can obtain 
+    //imgData via Canvas API
     canvas.height = outputHeight1
     canvas.width = outputWidth1
-    // console.log("image width", image.width)
     ctx.drawImage(imageRef.current, 0,0, outputWidth1, outputHeight1);
     setImageData(ctx.getImageData(0, 0, canvas.width, canvas.height));
+
+    //store a version of the original image in canvas form
     setOrigImageCanvas(canvas)
+
+    //reset ouptut image upon new image upload
     setImageCanvas(canvas)
     
   }
@@ -117,14 +140,13 @@ function App() {
   }
 
   //event method for hue click, adds or removes hues from list of focus hues
-
-      const handleHuesClick = (hue) => {
-        if (!selectedHues[hue]) {
-          addHue(hue)
-        } else {
-          removeHue(hue)
-        }
-      }
+  const handleHuesClick = (hue) => {
+    if (!selectedHues[hue]) {
+      addHue(hue)
+    } else {
+      removeHue(hue)
+    }
+  }
 
     
     //event method + helper method to get hue of pixel @ mouse click &
@@ -132,6 +154,10 @@ function App() {
     const handleImageClick = (e) => {
       const mousePos = [e.evt.clientX, e.evt.clientY]
       let hue = calculatePixelHue(mousePos)
+
+      //round down to the nearest multiple of 5
+      //because application group image hues by 5 
+      //as a means of 'quantizing' the image data
       while (hue % 5 !== 0){
         hue--;
       }
@@ -139,13 +165,16 @@ function App() {
     }
 
     const calculatePixelHue = (mousePos) => {
+      //determine pixel corresponding to mouse click by
+      //offsetting mouse position by image's position on view
       let offsetX = Math.round(mousePos[0] - outputRef.current.attrs.x)
       let offsetY = Math.round(mousePos[1] - outputRef.current.attrs.y)
-      console.log(offsetX, offsetY)
 
+      //get RGB data for that pixel via Canvas API
       let ctx = origImageCanvas.getContext('2d')
       let pixelData = ctx.getImageData(offsetX, offsetY, 1, 1).data
-      console.log(pixelData)
+
+      //convert RGB values to HSL and return hue
       const color = getPixelColor(pixelData[0], pixelData[1], pixelData[2])
 
       return color.h;
@@ -184,16 +213,21 @@ function App() {
     //redraw image when user selects hues
     useEffect(() => {
       if (imageRef.current && imageData) {
+        // create a canvas and draw the uploaded image
         const canvas = document.createElement('canvas')
         const context = canvas.getContext('2d')
         canvas.height = outputHeight
         canvas.width = outputWidth
         context.putImageData(imageData, 0, 0)
+
+        //if hues are selected, adjust image to desaturate 
+        //unselected hues in image
         if (Object.keys(selectedHues).length > 0) {
           adjustImage(canvas, context, Object.keys(selectedHues))
         }
+
+        //save canvas for display
         setImageCanvas(canvas)
-        console.log(selectedHues)
       }
   
     }, [selectedHues])
@@ -227,9 +261,6 @@ function App() {
     const startpt2 = getCirclePoint(hueAngle+5, radius, circleCenter)
     const endpt1 = getCirclePoint(hueAngle, endDist, circleCenter)
     const endpt2 = getCirclePoint(hueAngle+5, endDist, circleCenter)
-
-    // let selected = Object.keys(selectedHues).includes(hueAngle.toString())
-
     
       return (
         <Line
@@ -250,14 +281,17 @@ function App() {
   //scale plot length of hues based on the ratio of hue's frequency in the iamge to
   //the frequency of the most frequent hue in the image
   const scaleLength = (num, min, max) => {
-    if (num < 350) {  
+    //disregard hues that are too infrequent to be perceived
+    //to prevent display
+    if (num < 350) {
       return 0
     }
 
+    //create a minim size for bars for ease of interaction
     const minim = Math.round(plotLength * .1)
     
-    const result = Math.round((num/max) * plotLength)
-    return minim + (result * .8)
+    const result = Math.round((num/max) * plotLength *.9)
+    return minim + (result)
     
   }
 
@@ -296,22 +330,12 @@ function App() {
           ref={outputRef}
           width={imageCanvas.width} 
           height={imageCanvas.height} 
-          x={circleXY[0] + diameter + (plotLength)} 
-          y={Math.round(windowHeight / 5)}
+          x={imageX} 
+          y={imageY}
           image={imageCanvas}
           onClick={handleImageClick}
           />
       )
-
-      // return (  
-      // <ImageAdjust 
-      //   huesArray = {Object.keys(selectedHues)}
-      //   width = {imageRef.current.width}
-      //   height = {imageRef.current.height}
-      //   origImgdata = {imageData}
-      //   xPos = {800}
-      //   yPos={400}
-      // />)
     }
   }
 
@@ -329,6 +353,14 @@ function App() {
       }}
       >
         Reset Hue Selection
+      </Button>
+      <Button 
+      type = {"contained"}
+      onClick = {() => {
+        invertHues()
+      }}
+      >
+        Invert Hue Selection
       </Button>
       <Button 
       type = {"contained"}
